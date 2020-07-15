@@ -1,0 +1,98 @@
+version: '3'
+
+networks:
+    laravel:
+
+services:
+    nginx:
+        image: nginx:stable-alpine
+        container_name: nginx
+        ports:
+            - "8088:80"
+        volumes:
+            - ${APP_PATH_HOST}:${APP_PATH_CONTAINER}
+            - ${NGINX_PATH_HOST}:${NGINX_PATH_CONTAINER}
+        depends_on:
+            - php
+            - mysql
+        networks: 
+            - laravel
+
+    mysql:
+        image: mariadb
+        container_name: mysql
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "4306:3306"
+        volumes:
+            - ${DB_PATH_HOST}:${DB_PATH_CONTAINER}
+        environment:
+            MYSQL_DATABASE: homestead
+            MYSQL_USER: root
+            MYSQL_PASSWORD: user
+            MYSQL_ROOT_PASSWORD: user
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        networks:
+            - laravel
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        depends_on:
+            - mysql
+        environment:
+            - PMA_ARBITRARY=1
+        ports:
+            - 3888:80
+        environment:
+            PMA_HOST: mysql
+            MYSQL_ROOT_PASSWORD: user
+        networks:
+            - laravel
+
+    php:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: php
+        volumes:
+            - ${APP_PATH_HOST}:${APP_PATH_CONTAINER}
+        ports:
+            - "9000:9000"
+        networks: 
+            - laravel
+
+    composer:
+        image: composer:latest
+        container_name: composer
+        volumes:
+            - ${APP_PATH_HOST}:${APP_PATH_CONTAINER}
+        working_dir: ${APP_PATH_CONTAINER}
+        depends_on:
+            - php
+
+    npm:
+        image: node:latest
+        container_name: npm
+        volumes:
+            - ${APP_PATH_HOST}:${APP_PATH_CONTAINER}
+        working_dir: ${APP_PATH_CONTAINER}
+        entrypoint: ['npm']
+        networks:
+            - laravel
+
+    artisan:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: artisan
+        volumes:
+            - ${APP_PATH_HOST}:${APP_PATH_CONTAINER}
+        depends_on:
+            - mysql
+        working_dir: ${APP_PATH_CONTAINER}
+        entrypoint: ['php', "${ARTISAN_PATH_CONTAINER}"]
+        networks:
+            - laravel

@@ -1,0 +1,14 @@
+/src/node_modules
+/src/storage/*.key
+/src/vendor
+/src/.env
+/src/.phpunit.result.cache
+/src/npm-debug.log
+/src/yarn-error.log
+/mysql/*
+.idea/
+src/public/js
+src/public/css
+src/public/images
+node_modules/
+src/public/fonts/
